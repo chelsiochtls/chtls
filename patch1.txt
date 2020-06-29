@@ -1,0 +1,37 @@
+diff --git a/drivers/crypto/chelsio/chtls/chtls_cm.c b/drivers/crypto/chelsio/chtls/chtls_cm.c
+index f200fae..db6078a 100644
+--- a/drivers/crypto/chelsio/chtls/chtls_cm.c
++++ b/drivers/crypto/chelsio/chtls/chtls_cm.c
+@@ -638,11 +638,13 @@ int chtls_listen_start(struct chtls_dev *cdev, struct sock *sk)
+ #if IS_ENABLED(CONFIG_IPV6)
+ 	bool clip_valid = false;
+ #endif
++	bool is_chtls_dev = false;
+ 	struct listen_ctx *ctx;
+ 	struct adapter *adap;
+ 	struct port_info *pi;
+ 	int ret = 0;
+ 	int stid;
++	int i;
+ 
+ 	rcu_read_lock();
+ 	ndev = chtls_find_netdev(cdev, sk);
+@@ -650,6 +652,18 @@ int chtls_listen_start(struct chtls_dev *cdev, struct sock *sk)
+ 	if (!ndev)
+ 		return -EBADF;
+ 
++	adap = pci_get_drvdata(cdev->pdev);
++
++	for (i = 0;i < adap->params.nports;i++) {
++		if(cdev->ports[i] == ndev) {
++			is_chtls_dev = true;
++			break;
++		}
++	}
++	if (is_chtls_dev != true) {
++		return -EBADF;
++	}
++
+ 	pi = netdev_priv(ndev);
+ 	adap = pi->adapter;
+ 	if (!(adap->flags & CXGB4_FULL_INIT_DONE))
